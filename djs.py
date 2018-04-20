@@ -36,7 +36,7 @@ def attempt_to_submit_next_stage(index, stages, submitted_stages, data, jobids):
     else:
         # look at the dependencies of the index-th stage. If all are in submitted_stages, this is ready for submit.
         # Otherwise, move on.
-        dependencies = data[stages[index]]["depends_on"].split(",")
+        dependencies = data[stages[index]].split(",")
         # print('dependencies:', dependencies)
         if set(dependencies).issubset(set(submitted_stages)):
             if dependencies != [""]:
