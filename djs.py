@@ -78,9 +78,9 @@ def djs(args):
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(description='Run the IASI native (L1C and L2) to NetCDF conversion process.')
+    parser = argparse.ArgumentParser(description='Submit jobs with inter-dependencies to a job scheduler.')
     parser.add_argument('input_file', type=str,
-                        help='A string in containing the filename of the JSON file to read in from.')
+                        help='A string containing the filename of the input JSON file.')
     return parser
 
 
