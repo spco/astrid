@@ -1,0 +1,30 @@
+{
+	"trim":
+		{
+			"depends_on": ""
+		},
+	"alignment":
+		{
+			"depends_on": "trim"
+		},
+	"VC1":
+		{
+			"depends_on": "alignment"
+		},
+	"CNA1":
+		{
+			"depends_on": "alignment"
+		},
+	"VC2":
+		{
+			"depends_on": "alignment"
+		},
+	"annotation":
+		{
+			"depends_on": "VC1,VC2"
+		},
+	"CNA2":
+		{
+			"depends_on": "alignment"
+		}
+}
