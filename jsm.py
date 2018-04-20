@@ -48,6 +48,33 @@ def generate_graph(data):
     print("labels:", list_of_labels)
     return twodarray
 
+y = 0
+
+def submitjob(stage,dependency_ids):
+    global y
+    y += 1
+    #submit(stage,dependency_ids)
+    return y
+
+
+def attempt_to_submit_next_stage(index, stages, submitted_stages, data):
+    if stages[index] in submitted_stages:
+        # this stage already submitted - move on
+        print("already submitted stage " + str(index) + ": " + stages[index])
+        return
+    else:
+        # look at the dependencies of the index-th stage. If all are in submitted_stages, this is ready for submit. Otherwise, move on.
+        dependencies = data[stages[index]]["depends_on"].split(",")
+        # print(dependencies)
+        if set(dependencies).issubset(submitted_stages):
+            # submit stage
+            print("can submit stage " + str(index) + ": " + stages[index])
+            submitted_stages.append(stages[index])
+            return
+        else:
+            print("cannot yet submit stage " + str(index) + ": " + stages[index])
+    return
+
 
 def jsm(args):
     print("hello")
@@ -56,14 +83,20 @@ def jsm(args):
     data = json.loads(json_data)
     print(data)
 
-    list_of_labels = [label for label in data]
-    
-    print(list_of_labels)
+    list_of_stages = [stages for stages in data]
+    print(list_of_stages)
+    list_of_submitted_stages = [""]
+    index = -1
+    second_index = 0
+    while len(list_of_submitted_stages) < len(list_of_stages) + 1 and second_index < 20:
+        index += 1
+        index = index % len(list_of_stages)
+        print(index)
+        second_index += 1
+        attempt_to_submit_next_stage(index, list_of_stages, list_of_submitted_stages, data)
 
-    graph = generate_graph(data)
-
-    submit_jobs(graph, data)
-    data["trim"]["jobID"] = "returnedjobID"
+    print(list_of_stages)
+    print(list_of_submitted_stages)
 
 
 def create_parser():

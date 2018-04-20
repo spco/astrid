@@ -3,10 +3,6 @@
 		{
 			"depends_on": ""
 		},
-	"alignment":
-		{
-			"depends_on": "trim"
-		},
 	"VC1":
 		{
 			"depends_on": "alignment"
@@ -15,13 +11,17 @@
 		{
 			"depends_on": "alignment"
 		},
+	"annotation":
+		{
+			"depends_on": "VC1,VC2"
+		},
 	"VC2":
 		{
 			"depends_on": "alignment"
 		},
-	"annotation":
+	"alignment":
 		{
-			"depends_on": "VC1,VC2"
+			"depends_on": "trim"
 		},
 	"CNA2":
 		{
