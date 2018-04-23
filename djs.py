@@ -22,16 +22,16 @@ def submit_job(stage, dependency_ids):
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     if error is not None:
-        print("Abort - something went wrong in submitting!")
-        print("Stage name:", stage, "dependent on", dependency_ids)
+        print('Abort - something went wrong in submitting!')
+        print('Stage name:', stage, 'dependent on', dependency_ids)
         exit(1)
-    print("submitting " + str(stage) + " with job id " + str(y) + ", dependent on jobs", dependency_ids)
+    print('Submitting ' + str(stage) + ' with job id ' + str(y) + ', dependent on jobs', dependency_ids)
     return y
 
 
 def submit_stage(stage, data, jobids):
-    dependencies = data[stage].split(",")
-    print('dependencies:', dependencies)
+    dependencies = [item.strip() for item in data[stage].split(",")]
+    print('Dependencies of ' + str(stage) + ':', dependencies)
     # Check for the blank string as dependency
     if dependencies != ['']:
         dep_ids = [jobids[dep] for dep in dependencies]
@@ -44,59 +44,54 @@ def submit_stage(stage, data, jobids):
 
 # Based on https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm
 def topological_sort(data, matrix):
+    print('Calculating dependency order and checking for cyclic dependencies...', end='')
     list_of_all_stages = [item for item in data]
     # L holds the sorted elements
     L = []
     # Q holds the nodes with no incoming edges
     Q = [stage for stage in data if data[stage] == '']
-    print("Q:", Q, "L:", L)
     while Q:
         # Take an element with no incoming nodes, and place it in the sorted queue.
         L.append(Q.pop(0))
-        print("Q:", Q, "L:", L)
         # get index of popped stage in matrix
         n = list_of_all_stages.index(L[-1])
-        print("si:", n)
         # loop over all nodes m, looking for those with an edge e from n to m
         for m in range(matrix.shape[0]):
-            print("m=", m)
             # Check whether this stage has a dependency on the popped stage
             if matrix[m, n] == 1:
-                print("Edge found: matrix[m, n] == 1")
                 matrix[m, n] = 0
                 # Check whether m has no other incoming edges
                 if not matrix[m,:].any() == 1:
-                    # if list_of_all_stages[m] not in Q and list_of_all_stages[m] not in L:
-                        # Add to list of nodes with no incoming edges
+                    # Add to list of nodes with no incoming edges
                     Q.append(list_of_all_stages[m])
-        print(matrix)
-        print("Q:", Q, "L:", L)
 
-    print(not matrix.any())
-    print(matrix)
     if matrix.any():
-        print("Error: cyclic dependency identified. The following stages' dependencies could not be fully resolved:")
+        print(' Failed!\n#####################')
+        print('Error: cyclic dependency identified. The following stages\' dependencies could not be fully resolved:')
         for index in range(matrix.shape[0]):
             if matrix[index,:].any() == 1:
-                print(list_of_all_stages[index])
+                print('', list_of_all_stages[index])
+        print('\nAt the point that we abort, we have the following elements sorted:')
+        print(L)
         exit(1)
     else:
-        print("No cyclic dependencies. Good to go!")
+        print(' Done!')
+        print('No cyclic dependencies. Ready to submit all the jobs!\n')
     return L
 
 
 def create_matrix(data):
+    print('Creating connectivity matrix...', end='')
     matrix = np.zeros((len(data), len(data)))
-    print(matrix)
     list_of_labels = []
     for label in data:
         list_of_labels.append(label)
 
     for i, label in enumerate(data):
-        for item in data[label].split(','):
-            if item != "":
+        for item in [stage.strip() for stage in data[label].split(',')]:
+            if item != '':
                 matrix[list_of_labels.index(label), list_of_labels.index(item)] = 1
-    print(matrix)
+    print(' Done!')
     return matrix
 
 
@@ -113,9 +108,8 @@ def djs(args):
 
     data = json.loads(json_data)
 
-    list_of_stages = [stages for stages in data]
-    print("Stages to be submitted:")
-    print(list_of_stages)
+    print('Stages to be submitted:')
+    print([stages for stages in data])
 
     matrix = create_matrix(data)
     ts = topological_sort(data, matrix)
@@ -124,7 +118,7 @@ def djs(args):
     for stage in ts:
         submit_stage(stage, data, jobids)
 
-    print("\nAll jobs submitted!")
+    print('\nAll jobs submitted!')
     print_summary(jobids)
 
 
@@ -135,7 +129,7 @@ def create_parser():
     return parser
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
     djs(args)
