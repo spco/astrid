@@ -18,5 +18,10 @@ dependencies use the empty string "" as their value.
 ## Package dependencies
 
 The following packages are required, and easily installable by your preferred package manager if they are not present 
-in your installation: argparse, json, subprocess, numpy, collections.
+in your installation: 
+* argparse 
+* json
+* subprocess 
+* numpy
+* collections
  
