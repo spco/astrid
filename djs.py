@@ -61,7 +61,7 @@ def topological_sort(data, matrix):
             if matrix[m, n] == 1:
                 matrix[m, n] = 0
                 # Check whether m has no other incoming edges
-                if not matrix[m,:].any() == 1:
+                if not matrix[m, :].any() == 1:
                     # Add to list of nodes with no incoming edges
                     Q.append(list_of_all_stages[m])
 
@@ -69,7 +69,7 @@ def topological_sort(data, matrix):
         print(' Failed!\n#####################')
         print('Error: cyclic dependency identified. The following stages\' dependencies could not be fully resolved:')
         for index in range(matrix.shape[0]):
-            if matrix[index,:].any() == 1:
+            if matrix[index, :].any() == 1:
                 print('', list_of_all_stages[index])
         print('\nAt the point that we abort, we have the following elements sorted:')
         print(L)
