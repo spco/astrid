@@ -8,3 +8,15 @@ job scheduler to schedule and launch the jobs, and to cancel any jobs dependent 
 Job dependencies are resolved before submission, to ensure that the full pipeline can be submitted.
 
 Helpful error messages are output if the jobs cannot be submitted due to mutual dependencies.
+
+## Usage
+
+Call DJS with python3 djs.py /name/of/input/file . The input file should be a JSON file with structure as given in 
+input.json. Jobs are listed as keys, with their dependencies as comma-separated strings in the values. Jobs with no 
+dependencies use the empty string "" as their value.
+
+## Package dependencies
+
+The following packages are required, and easily installable by your preferred package manager if they are not present 
+in your installation: argparse, json, subprocess, numpy, collections.
+ 
