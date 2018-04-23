@@ -79,6 +79,7 @@ def djs(args):
     list_of_stages = [stages for stages in data]
     print("Stages to be submitted:")
     print(list_of_stages)
+
     dependencies_exist, dependencies_set = check_dependencies_exist(data)
     if not dependencies_exist:
         print("\n##########################\nError: At least one stage declares a dependency that does not exist.")
@@ -88,6 +89,7 @@ def djs(args):
               [dep for dep in dependencies_set if dep not in list_of_stages + ['']])
         exit(1)
     check_for_self_dependence(data)
+
     jobids = ["" for _ in list_of_stages]
     list_of_submitted_stages = [""]
     index = -1
