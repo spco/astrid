@@ -54,6 +54,23 @@ def attempt_to_submit_next_stage(index, stages, submitted_stages, data, jobids):
     return
 
 
+def check_for_self_dependence(data):
+    # Sanity check whether any stage has itself as a direct dependency.
+    for stage in data:
+        if stage in data[stage].split(","):
+            print("\n#################\nError: self-dependence in", stage, ". Execution terminated, no jobs submitted.")
+            exit(1)
+    print("No self-dependencies identified.")
+    return 0
+
+
+def check_dependencies_exist(data):
+    dependencies_set = set([item for stage in data for item in data[stage].split(",")])
+    print("Dependencies:", dependencies_set)
+    list_of_stages = [stages for stages in data] + ['']
+    return dependencies_set.issubset(list_of_stages), dependencies_set
+
+
 def djs(args):
     json_data = open(args.input_file).read()
 
@@ -62,6 +79,15 @@ def djs(args):
     list_of_stages = [stages for stages in data]
     print("Stages to be submitted:")
     print(list_of_stages)
+    dependencies_exist, dependencies_set = check_dependencies_exist(data)
+    if not dependencies_exist:
+        print("\n##########################\nError: At least one stage declares a dependency that does not exist.")
+        print("\nStages declared:", list_of_stages + [''])
+        print("\nDependencies declared:", dependencies_set)
+        print("\nDependencies declared that are not in the stages declared:",
+              [dep for dep in dependencies_set if dep not in list_of_stages + ['']])
+        exit(1)
+    check_for_self_dependence(data)
     jobids = ["" for _ in list_of_stages]
     list_of_submitted_stages = [""]
     index = -1
@@ -74,7 +100,11 @@ def djs(args):
         second_index += 1
         attempt_to_submit_next_stage(index, list_of_stages, list_of_submitted_stages, data, jobids)
 
-    print("\nAll jobs submitted!")
+    if second_index == len(list_of_stages)*len(list_of_stages):
+        print("\n##########################\nFailed to submit all jobs.")
+        exit(1)
+    else:
+        print("\nAll jobs submitted!")
 
 
 def create_parser():
