@@ -1,8 +1,9 @@
 import argparse
 import json
 import subprocess
+import numpy as np
 # Reads in a json file. Each item in the json file is a job to submit. The contents are its name, and which jobs
-# it depends upon. The program takes the jobs, submits them to torque, and captures the jobIDs returned.
+# it depends upon. The program takes tdhe jobs, submits them to torque, and captures the jobIDs returned.
 # These are then used as inputs for the jobs which are dependent.
 
 y = 0
@@ -28,47 +29,83 @@ def submit_job(stage, dependency_ids):
     return y
 
 
-def attempt_to_submit_next_stage(index, stages, submitted_stages, data, jobids):
-    if stages[index] in submitted_stages:
-        # this stage already submitted - move on
-        # print("already submitted stage " + str(index) + ": " + stages[index])
-        return
+def submit_stage(stage, data, jobids):
+    dependencies = data[stage].split(",")
+    print('dependencies:', dependencies)
+    # Check for the blank string as dependency
+    if dependencies != ['']:
+        dep_ids = [jobids[dep] for dep in dependencies]
     else:
-        # look at the dependencies of the index-th stage. If all are in submitted_stages, this is ready for submit.
-        # Otherwise, move on.
-        dependencies = data[stages[index]].split(",")
-        # print('dependencies:', dependencies)
-        if set(dependencies).issubset(set(submitted_stages)):
-            if dependencies != [""]:
-                dep_indices = [jobids[stages.index(item)] for item in dependencies]
-            else:
-                dep_indices = []
-            # print("can submit stage " + str(index) + ": " + stages[index] + " with dependency job ids", dep_indices)
-            # submit stage
-            jobids[index] = submit_job(stages[index], dep_indices)
-            submitted_stages.append(stages[index])
-            return
-        else:
-            print("cannot yet submit stage " + str(index) + ": " + stages[index] + ", because of dependency on " +
-                  ', '.join([str(item) for item in set(dependencies).difference(submitted_stages)]))
+        dep_ids = None
+    # submit stage
+    jobids[stage] = submit_job(stage, dep_ids)
     return
 
 
-def check_for_self_dependence(data):
-    # Sanity check whether any stage has itself as a direct dependency.
-    for stage in data:
-        if stage in data[stage].split(","):
-            print("\n#################\nError: self-dependence in", stage, ". Execution terminated, no jobs submitted.")
-            exit(1)
-    print("No self-dependencies identified.")
-    return 0
+# Based on https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm
+def topological_sort(data, matrix):
+    list_of_all_stages = [item for item in data]
+    # L holds the sorted elements
+    L = []
+    # Q holds the nodes with no incoming edges
+    Q = [stage for stage in data if data[stage] == '']
+    print("Q:", Q, "L:", L)
+    while Q:
+        # Take an element with no incoming nodes, and place it in the sorted queue.
+        L.append(Q.pop(0))
+        print("Q:", Q, "L:", L)
+        # get index of popped stage in matrix
+        n = list_of_all_stages.index(L[-1])
+        print("si:", n)
+        # loop over all nodes m, looking for those with an edge e from n to m
+        for m in range(matrix.shape[0]):
+            print("m=", m)
+            # Check whether this stage has a dependency on the popped stage
+            if matrix[m, n] == 1:
+                print("Edge found: matrix[m, n] == 1")
+                matrix[m, n] = 0
+                # Check whether m has no other incoming edges
+                if not matrix[m,:].any() == 1:
+                    # if list_of_all_stages[m] not in Q and list_of_all_stages[m] not in L:
+                        # Add to list of nodes with no incoming edges
+                    Q.append(list_of_all_stages[m])
+        print(matrix)
+        print("Q:", Q, "L:", L)
+
+    print(not matrix.any())
+    print(matrix)
+    if matrix.any():
+        print("Error: cyclic dependency identified. The following stages' dependencies could not be fully resolved:")
+        for index in range(matrix.shape[0]):
+            if matrix[index,:].any() == 1:
+                print(list_of_all_stages[index])
+        exit(1)
+    else:
+        print("No cyclic dependencies. Good to go!")
+    return L
 
 
-def check_dependencies_exist(data):
-    dependencies_set = set([item for stage in data for item in data[stage].split(",")])
-    print("Dependencies:", dependencies_set)
-    list_of_stages = [stages for stages in data] + ['']
-    return dependencies_set.issubset(list_of_stages), dependencies_set
+def create_matrix(data):
+    matrix = np.zeros((len(data), len(data)))
+    print(matrix)
+    list_of_labels = []
+    for label in data:
+        list_of_labels.append(label)
+
+    for i, label in enumerate(data):
+        for item in data[label].split(','):
+            if item != "":
+                matrix[list_of_labels.index(label), list_of_labels.index(item)] = 1
+    print(matrix)
+    return matrix
+
+
+def print_summary(jobids):
+    print('\n' + 'Job name'.ljust(20), 'Job ID')
+    print('-' * 34)
+    for item in jobids:
+        print(item.ljust(20), jobids[item])
+    return
 
 
 def djs(args):
@@ -80,33 +117,15 @@ def djs(args):
     print("Stages to be submitted:")
     print(list_of_stages)
 
-    dependencies_exist, dependencies_set = check_dependencies_exist(data)
-    if not dependencies_exist:
-        print("\n##########################\nError: At least one stage declares a dependency that does not exist.")
-        print("\nStages declared:", list_of_stages + [''])
-        print("\nDependencies declared:", dependencies_set)
-        print("\nDependencies declared that are not in the stages declared:",
-              [dep for dep in dependencies_set if dep not in list_of_stages + ['']])
-        exit(1)
-    check_for_self_dependence(data)
+    matrix = create_matrix(data)
+    ts = topological_sort(data, matrix)
 
-    jobids = ["" for _ in list_of_stages]
-    list_of_submitted_stages = [""]
-    index = -1
-    second_index = 0
-    # Loop while there are un-submitted jobs, or until we loop through len(list_of_stages)^2 times,
-    # in which case we must have hit an unresolvable dependency
-    while len(list_of_submitted_stages) < len(list_of_stages) + 1 and second_index < len(list_of_stages)*len(list_of_stages):
-        index += 1
-        index = index % len(list_of_stages)
-        second_index += 1
-        attempt_to_submit_next_stage(index, list_of_stages, list_of_submitted_stages, data, jobids)
+    jobids = dict()
+    for stage in ts:
+        submit_stage(stage, data, jobids)
 
-    if second_index == len(list_of_stages)*len(list_of_stages):
-        print("\n##########################\nFailed to submit all jobs.")
-        exit(1)
-    else:
-        print("\nAll jobs submitted!")
+    print("\nAll jobs submitted!")
+    print_summary(jobids)
 
 
 def create_parser():
