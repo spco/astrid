@@ -2,6 +2,7 @@ import argparse
 import json
 import subprocess
 import numpy as np
+import collections
 # Reads in a json file. Each item in the json file is a job to submit. The contents are its name, and which jobs
 # it depends upon. The program takes tdhe jobs, submits them to torque, and captures the jobIDs returned.
 # These are then used as inputs for the jobs which are dependent.
@@ -81,13 +82,13 @@ def topological_sort(data, matrix):
 
 
 def create_matrix(data):
-    print('Creating connectivity matrix...', end='')
+    print('\nCreating connectivity matrix...', end='')
     matrix = np.zeros((len(data), len(data)))
     list_of_labels = []
     for label in data:
         list_of_labels.append(label)
 
-    for i, label in enumerate(data):
+    for label in data:
         for item in [stage.strip() for stage in data[label].split(',')]:
             if item != '':
                 matrix[list_of_labels.index(label), list_of_labels.index(item)] = 1
@@ -106,7 +107,7 @@ def print_summary(jobids):
 def djs(args):
     json_data = open(args.input_file).read()
 
-    data = json.loads(json_data)
+    data = json.loads(json_data, object_pairs_hook=collections.OrderedDict)
 
     print('Stages to be submitted:')
     print([stages for stages in data])
