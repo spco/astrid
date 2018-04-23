@@ -4,6 +4,7 @@ import subprocess
 import numpy as np
 import collections
 import re
+import os
 # Reads in a json file. Each item in the json file is a job to submit. The contents are its name, and which jobs
 # it depends upon. The program takes tdhe jobs, submits them to torque, and captures the jobIDs returned.
 # These are then used as inputs for the jobs which are dependent.
@@ -123,6 +124,10 @@ def create_parser():
     parser = argparse.ArgumentParser(description='Submit jobs with inter-dependencies to a job scheduler.')
     parser.add_argument('input_file', type=str,
                         help='A string containing the filename of the input JSON file.')
+    parser.add_argument('job-submission-directory', type=str,
+                        help='The directory containing the job submission files to be used. These should be named '
+                             'stage.sub for each stage reference in the input JSON file.',
+                        nargs='?', default=os.getcwd())
     return parser
 
 
