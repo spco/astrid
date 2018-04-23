@@ -3,31 +3,29 @@ import json
 import subprocess
 import numpy as np
 import collections
+import re
 # Reads in a json file. Each item in the json file is a job to submit. The contents are its name, and which jobs
 # it depends upon. The program takes tdhe jobs, submits them to torque, and captures the jobIDs returned.
 # These are then used as inputs for the jobs which are dependent.
 
-y = 0
-
 
 def submit_job(stage, dependency_ids):
-    global y
-    # increment the jobid - this is a mock part since I don't get anything back from echo but do from qsub
-    y += 1
     if dependency_ids:
-        command = 'echo "-W depend=afterok:' + ':'.join([str(item) for item in dependency_ids]) + '"'
+        command = 'qsub -W depend=afterok:' + ':'.join([str(item) for item in dependency_ids]) + ' ' + str(stage) + '.sub'
     else:
-        command = 'echo'
+        command = 'qsub ' + str(stage) + '.sub'
     print(command)
     # Execute command in bash
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
+    print(output)
+    jobid = str(int(re.search(b'[0-9]+', output).group(0)))
     if error is not None:
         print('Abort - something went wrong in submitting!')
         print('Stage name:', stage, 'dependent on', dependency_ids)
         exit(1)
-    print('Submitting ' + str(stage) + ' with job id ' + str(y) + ', dependent on jobs', dependency_ids)
-    return y
+    print('Submitting ' + str(stage) + ' with job id ' + str(jobid) + ', dependent on jobs', dependency_ids)
+    return jobid
 
 
 def submit_stage(stage, data, jobids):
