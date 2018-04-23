@@ -14,11 +14,9 @@ def submit_job(stage, dependency_ids):
         command = 'qsub -W depend=afterok:' + ':'.join([str(item) for item in dependency_ids]) + ' ' + str(stage) + '.sub'
     else:
         command = 'qsub ' + str(stage) + '.sub'
-    print(command)
     # Execute command in bash
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-    print(output)
     jobid = str(int(re.search(b'[0-9]+', output).group(0)))
     if error is not None:
         print('Abort - something went wrong in submitting!')
