@@ -101,7 +101,7 @@ def print_summary(jobids):
     return
 
 
-def djs(args):
+def astrid(args):
     json_data = open(args.input_file).read()
 
     data = json.loads(json_data, object_pairs_hook=collections.OrderedDict)
@@ -134,4 +134,4 @@ def create_parser():
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
-    djs(args)
+    astrid(args)

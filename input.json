@@ -1,9 +1,9 @@
 {
 	"trim": "",
-	"VC1": "alignment",
-	"CNA1": "alignment",
-	"annotation": "VC1,VC2",
-	"VC2": "alignment",
 	"alignment": "trim",
+	"VC1": "alignment",
+	"VC2": "alignment",
+	"annotation": "VC1,VC2",
+	"CNA1": "alignment",
 	"CNA2": "alignment"
 }
