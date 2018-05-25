@@ -5,6 +5,7 @@ import numpy as np
 import collections
 import re
 import os
+import time
 # Reads in a json file. Each item in the json file is a job to submit. The contents are its name, and which jobs
 # it depends upon. The program takes tdhe jobs, submits them to torque, and captures the jobIDs returned.
 # These are then used as inputs for the jobs which are dependent.
@@ -115,6 +116,7 @@ def astrid(args):
     jobids = dict()
     for stage in ts:
         submit_stage(stage, data, jobids)
+        time.sleep(args.delay)
 
     print('\nAll jobs submitted!')
     print_summary(jobids)
@@ -128,6 +130,10 @@ def create_parser():
                         help='The directory containing the job submission files to be used. These should be named '
                              'stage.sub for each stage reference in the input JSON file.',
                         nargs='?', default=os.getcwd())
+    parser.add_argument('delay', type=int,
+                        help='Time delay between job submission, as a courtesy to the job scheduler when submitting '
+                             'a large number of jobs. Defaults to 0.1 seconds.',
+                        nargs='?', default=0.1)
     return parser
 
 
