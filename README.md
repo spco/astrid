@@ -18,11 +18,13 @@ dependencies use the empty string "" as their value.
 
 ## Package dependencies
 
-The following packages are required, and easily installable by your preferred package manager if they are not present 
-in your installation: 
+The following packages are required. Most should be part of any python3 distribution, but are easily installable by your 
+preferred package manager if they are not present in your installation: 
 * argparse 
 * json
 * subprocess 
 * numpy
 * collections
- 
+* re
+* os
+* time 
