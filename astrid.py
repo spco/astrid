@@ -94,10 +94,10 @@ def create_matrix(data):
     return matrix
 
 
-def print_summary(jobids):
+def print_summary(jobids, ts):
     print('\n' + 'Job name'.ljust(20), 'Job ID')
     print('-' * 34)
-    for item in jobids:
+    for item in ts:
         print(item.ljust(20), jobids[item])
     return
 
@@ -119,7 +119,7 @@ def astrid(args):
         time.sleep(args.delay)
 
     print('\nAll jobs submitted!')
-    print_summary(jobids)
+    print_summary(jobids, ts)
 
 
 def create_parser():
